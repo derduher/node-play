@@ -7,82 +7,72 @@ ee = require('events').EventEmitter,
 util = require('util'),
 sys = require('sys');
 
-var queue = {q:[],
-	push: function (item) {
-		if (this[item]) { this[item]++;}
-		else { this[item] = 1; this.q.push(item);}
-	},
-	pop: function () {
-		return this.q.pop();
-	}
-};
-var max = 0;
-var concurrent_max = 3, concurrent = 0;
+htmlHandler = function(err, dom) {
+	if (err) {
+		sys.debug("Error: " + err);
+	} else {
 
-var nextInLine = function (site) {
-	while (queue.q.length && max < 50 && concurrent < concurrent_max) {
-		max++;
-		console.log('processing queue: ' + queue.q.length + ' ' + max);
-		concurrent++;
-		return new Crawler(queue.pop());
+		// soupselect happening here...
+		var hrefs = select(dom, 'a[href]');
+
+		hrefs.forEach(function(node) {
+			var thelink = url.resolve(site,node.attribs.href);
+			theParsedLink = url.parse(thelink);
+			if (theParsedLink.protocol.indexOf('http') !== -1) {
+				this.queue.push(thelink);
+			} else {console.log("not handled: " + thelink);}
+		});
+		this.emit('parsed', site);
 	}
 };
 
-function Crawler (site) {
-	if (!queue[site]) {
-		queue[site] = 0;
+var responseHandler = function (res) {
+	console.log(this);
+	var body = '';
+	if (res.statusCode === 301 || res.statusCode === 302) {
+		this.queue.push(res.headers.location);
+		this.emit('redirect', this.site);
+	} else if (res.statusCode === 200 && res.headers['content-type'].indexOf('text/html') !== -1) {
+		res.on('data', function (chunk) {
+			body += chunk;
+		});
+		res.on('end', function () {
+			var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(crawler, err, dom);});
+
+			var parser = new htmlparser.Parser(handler);
+			parser.parseComplete(body);
+		});
+	} else {
+		console.log(res);
 	}
+};
+
+var Crawler = function (queue, callback) {
+	if (! (this instanceof arguments.callee)) {
+		return new arguments.callee(arguments);
+	}
+	var site = queue.pop();
 	console.log("crawling: " + site);
 	clientLib = http;
 	if (url.parse(site).protocol === 'https:') {
 		clientLib = https;
 	}
 	var crawler = this;
-	var client = clientLib.get(site, function (res) {
-		console.log('got response: ' + res.statusCode);
-		var body = '';
-		if (res.statusCode === 301 || res.statusCode === 302) {
-			queue.push(res.headers.location);
-			crawler.emit('redirect', site);
-		} else if (res.headers['content-type'].indexOf('text/html') !== -1) {
-			res.on('data', function (chunk) {
-				body += chunk;
-			});
-			res.on('end', function () {
-				var handler = new htmlparser.DefaultHandler(function(err, dom) {
-					if (err) {
-						sys.debug("Error: " + err);
-					} else {
+	crawler.site = site;
+	crawler.queue = queue;
+	crawler.callback = callback;
+	console.log(crawler);
 
-						// soupselect happening here...
-						var href = select(dom, 'a[href]');
+	var client = clientLib.get(site, responseHandler);
 
-						href.forEach(function(link) {
-							var thelink = url.resolve(site,link.attribs.href);
-							theParsedLink = url.parse(thelink);
-							if (theParsedLink.protocol.indexOf('http') !== -1) {
-								queue.push(thelink);
-							} else {console.log("not handled: " + thelink);}
-						});
-						crawler.emit('parsed', site);
-					}
-				});
-
-				var parser = new htmlparser.Parser(handler);
-				parser.parseComplete(body);
-			});
-		} else {
-			console.log(res.headers);
-		}
-		concurrent--;
-	});
 	client.on('error', function(e) {
 		console.log('problem with request: ' + e.message);
 		crawler.emit('error', site);
 	});
-	this.on('parsed', nextInLine);
-	this.on('redirect', nextInLine);
-	this.on('error', nextInLine);
-}
+
+	this.on('parsed', crawler.callback);
+	this.on('redirect', crawler.callback);
+	this.on('error', crawler.callback);
+};
 util.inherits(Crawler, ee);
 module.exports = Crawler;
