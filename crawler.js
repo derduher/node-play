@@ -1,8 +1,7 @@
 var http = require('http'),
 	sys = require('sys');
 
-	console.log('here');
-function Fuckall () {
+function Crawler () {
 	var server = http.createServer(function (request, response) {
 		request.on('end', function () {
 			var resp = sys.inspect(request);
@@ -16,5 +15,4 @@ function Fuckall () {
 	});
 	server.listen(80);
 };
-console.log(Fuckall);
-module.exports = Fuckall;
+module.exports = Crawler;
