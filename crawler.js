@@ -5,74 +5,94 @@ htmlparser = require("htmlparser"),
 url = require("url"),
 ee = require('events').EventEmitter,
 util = require('util'),
+ent = require('entities'),
 sys = require('sys');
 
-htmlHandler = function(err, dom) {
-	if (err) {
-		sys.debug("Error: " + err);
-	} else {
-
-		// soupselect happening here...
-		var hrefs = select(dom, 'a[href]');
-
-		hrefs.forEach(function(node) {
-			var thelink = url.resolve(site,node.attribs.href);
-			theParsedLink = url.parse(thelink);
-			if (theParsedLink.protocol.indexOf('http') !== -1) {
-				this.queue.push(thelink);
-			} else {console.log("not handled: " + thelink);}
-		});
-		this.emit('parsed', site);
-	}
-};
-
-var responseHandler = function (res) {
-	console.log(this);
-	var body = '';
-	if (res.statusCode === 301 || res.statusCode === 302) {
-		this.queue.push(res.headers.location);
-		this.emit('redirect', this.site);
-	} else if (res.statusCode === 200 && res.headers['content-type'].indexOf('text/html') !== -1) {
-		res.on('data', function (chunk) {
-			body += chunk;
-		});
-		res.on('end', function () {
-			var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(crawler, err, dom);});
-
-			var parser = new htmlparser.Parser(handler);
-			parser.parseComplete(body);
-		});
-	} else {
-		console.log(res);
-	}
-};
 
 var Crawler = function (queue, callback) {
 	if (! (this instanceof arguments.callee)) {
 		return new arguments.callee(arguments);
 	}
-	var site = queue.pop();
-	console.log("crawling: " + site);
-	clientLib = http;
-	if (url.parse(site).protocol === 'https:') {
-		clientLib = https;
-	}
+
+	var badExt = /\.(?:gif|jpg|jpeg|png|m4v|pdf|txt|mp3)$/;
+
+	var htmlHandler = function(err, dom, site) {
+		if (err) {
+			sys.debug("Error: " + err);
+		} else {
+
+			// soupselect happening here...
+			var hrefs = select(dom, 'a[href]');
+
+			hrefs.forEach(function(node) {
+				var dec = ent.decode(node.attribs.href);
+				var thelink = url.resolve(site, dec);
+				theParsedLink = url.parse(thelink);
+				if (theParsedLink.protocol.indexOf('http') !== -1 && !badExt.test(thelink)) {
+					queue.push(thelink);
+				} else {
+					if (theParsedLink.protocol.indexOf('mailto:') !== -1) {
+						thelink = 'mailto';
+					} else if (theParsedLink.protocol.indexOf('javascript') !== -1) {
+						thelink = 'javascript';
+					} else if (theParsedLink.protocol.indexOf('ftp:') !== -1) {
+						thelink = 'ftp';
+					} else if (badExt.test(thelink)) {
+						thelink = 'badext';
+					}
+					if (errors.nothandled[thelink]) {
+						errors.nothandled[thelink]++;
+					} else {
+						errors.nothandled[thelink] = 1;
+					}
+				}
+			});
+			crawler.emit('parsed', site);
+		}
+	};
+
+	var responseHandler = function (res, site) {
+		var body = '';
+		if (res.statusCode === 301 || res.statusCode === 302) {
+			queue.push(res.headers.location);
+			crawler.emit('redirect', site);
+		} else if (res.statusCode === 200 && res.headers['content-type'] && res.headers['content-type'].indexOf('text/html') !== -1) {
+			res.on('data', function (chunk) {
+				body += chunk;
+			});
+			res.on('end', function () {
+				var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(this, err, dom, site);});
+
+				var parser = new htmlparser.Parser(handler);
+				parser.parseComplete(body);
+			});
+		} else {
+			errors.badResponse[site] = {status: res.statusCode, headers: res.headers};
+			crawler.emit('error', site);
+		}
+	};
+
 	var crawler = this;
-	crawler.site = site;
-	crawler.queue = queue;
-	crawler.callback = callback;
-	console.log(crawler);
+	var crawl = function () {
+		var site = queue.pop();
+		clientLib = http;
+		if (url.parse(site).protocol === 'https:') {
+			clientLib = https;
+		}
 
-	var client = clientLib.get(site, responseHandler);
+		var client = clientLib.get(site, function (res) {responseHandler.call(this, res, site);});
 
-	client.on('error', function(e) {
-		console.log('problem with request: ' + e.message);
-		crawler.emit('error', site);
-	});
+		client.on('error', function(e) {
+			console.log('problem with request: ' + e.message);
+			crawler.emit('error', site);
+		});
 
-	this.on('parsed', crawler.callback);
-	this.on('redirect', crawler.callback);
-	this.on('error', crawler.callback);
+	};
+	this.on('parsed', callback);
+	this.on('redirect', callback);
+	this.on('error', callback);
+	var errors = {badResponse: {}, nothandled:{}};
+	return {crawl: crawl, htmlHandler: htmlHandler, errors: errors};
 };
 util.inherits(Crawler, ee);
 module.exports = Crawler;
