@@ -62,6 +62,7 @@ var Crawler = function (queue, callback) {
 				body += chunk;
 			});
 			res.on('end', function () {
+				console.log(geoip.lookup(res.connection.remoteAddress));
 				var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(this, err, dom, site);});
 
 				var parser = new htmlparser.Parser(handler);
