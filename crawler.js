@@ -5,6 +5,7 @@ htmlparser = require("htmlparser"),
 url = require("url"),
 ee = require('events').EventEmitter,
 util = require('util'),
+geoip = require('geoip-lite'),
 ent = require('entities'),
 sys = require('sys');
 
