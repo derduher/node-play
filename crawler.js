@@ -10,7 +10,7 @@ ent = require('entities'),
 sys = require('sys');
 
 
-var Crawler = function (queue, callback) {
+var Crawler = function (queue, servers, callback) {
 	if (! (this instanceof arguments.callee)) {
 		return new arguments.callee(arguments);
 	}
@@ -62,7 +62,11 @@ var Crawler = function (queue, callback) {
 				body += chunk;
 			});
 			res.on('end', function () {
-				console.log(geoip.lookup(res.connection.remoteAddress));
+				var ip = res.connection.remoteAddress;
+				if (ip) {
+					var geo = geoip.lookup(res.connection.remoteAddress);
+					servers.add({ip: ip, site: })
+				}
 				var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(this, err, dom, site);});
 
 				var parser = new htmlparser.Parser(handler);

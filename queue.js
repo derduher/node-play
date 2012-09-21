@@ -5,6 +5,9 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 var Queue = function (initialSites) {
+	if (! (this instanceof arguments.callee)) {
+		return new arguments.callee(arguments);
+	}
 	var sites = Array.prototype.slice.call(arguments);
 	var q = {};
 	_(sites).each(function (i) {
