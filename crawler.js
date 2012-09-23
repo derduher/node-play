@@ -5,7 +5,6 @@ htmlparser = require("htmlparser"),
 url = require("url"),
 ee = require('events').EventEmitter,
 util = require('util'),
-geoip = require('geoip-lite'),
 ent = require('entities'),
 sys = require('sys');
 
@@ -64,7 +63,6 @@ var Crawler = function (queue, servers, callback) {
 			res.on('end', function () {
 				var ip = res.connection.remoteAddress;
 				if (ip) {
-					var geo = geoip.lookup(res.connection.remoteAddress);
 					servers.add({ip: ip, site: site})
 				}
 				var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(this, err, dom, site);});
