@@ -8,9 +8,9 @@ var servers = new Servers();
 //servers.on('add', function(geo) {
 	//console.log(geo.location.ll);
 //});
-servers.on('failed', function(geo) {
-	console.log(geo);
-});
+//servers.on('failed', function(geo) {
+	//console.warn(geo.site);
+//});
 
 var sites_crawled = 0,
 concurrent_max = 10,
@@ -24,7 +24,7 @@ var nextInLine = function (site) {
 		crawler.crawl();
 	}
 	site = site || '';
-	console.log(sites_crawled, queue.length(), concurrent, site.substr(7,20));
+	//console.log(sites_crawled, queue.length(), concurrent, site.substr(7,30));
 	if (concurrent < 1) {
 		console.log('done');
 		console.log(crawler.errors);

@@ -9,17 +9,22 @@ var Servers = function () {
 		return new arguments.callee(arguments);
 	}
 	events.EventEmitter.call(this);
-	this.sites = [];
+	this.sites = {};
 };
+// I'm not sure why this needs to be before adding the add method
 util.inherits(Servers, events.EventEmitter);
 Servers.prototype.add = function (site) {
+	var host = url.parse(site.site).hostname;
+	if (this.sites[host]) {
+		return this.sites[host];
+	}
 	var location = geoip.lookup(site.ip);
 	if (location) {
 		var geo = {
 			location : location,
-			host : url.parse(site.site).hostname
+			host : host
 		};
-		this.sites.push(geo);
+		this.sites[host]= geo;
 		this.emit('add', geo);
 		return geo;
 	}
