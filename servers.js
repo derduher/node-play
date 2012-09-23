@@ -1,6 +1,8 @@
 var url = require("url"),
+util = require('util'),
 ee = require('events').EventEmitter,
 _ = require('underscore');
+
 var Servers = function (initialSites) {
 	if (! (this instanceof arguments.callee)) {
 		return new arguments.callee(arguments);
