@@ -65,7 +65,7 @@ var Crawler = function (queue, servers, callback) {
 				var ip = res.connection.remoteAddress;
 				if (ip) {
 					var geo = geoip.lookup(res.connection.remoteAddress);
-					servers.add({ip: ip, site: })
+					servers.add({ip: ip, site: site})
 				}
 				var handler = new htmlparser.DefaultHandler(function (err, dom) {htmlHandler.call(this, err, dom, site);});
 
