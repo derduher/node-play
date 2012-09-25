@@ -5,15 +5,9 @@ Servers = require('./servers');
 
 var queue = new Queue('http://www.google.com', 'http://slashdot.org', 'http://www.yahoo.com', 'http://www.rottentomatoes.com', 'http://www.github.com'),
 servers = new Servers();
-//servers.on('add', function(geo) {
-	//console.log(geo.location.ll);
-//});
-//servers.on('failed', function(geo) {
-	//console.warn(geo.site);
-//});
 
 var sites_crawled = 0,
-concurrent_max = 10,
+concurrent_max = 2,
 concurrent = 1,
 max_sites = 1000;
 var nextInLine = function (site) {
@@ -33,3 +27,4 @@ var nextInLine = function (site) {
 
 var crawler = new Crawler(queue, servers, nextInLine);
 nextInLine();
+module.exports = servers;

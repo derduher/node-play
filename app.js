@@ -1,6 +1,7 @@
 var app = require('http').createServer(handler)
-  , io = require('socket.io').listen(app)
-  , fs = require('fs')
+  , io = require('socket.io')
+  , ws = io.listen(app)
+  , servers = require('./client')
 
 app.listen(80);
 var static = require('node-static');
@@ -19,9 +20,12 @@ function handler (req, res) {
     });
 }
 
-io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
+ws.on('connection', function (socket) {
+  //socket.emit('news', { hello: 'world' });
   socket.on('my other event', function (data) {
     console.log(data);
+  });
+  servers.on('add', function(geo) {
+	  socket.emit('news', geo);
   });
 });
