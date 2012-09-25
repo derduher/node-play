@@ -36,5 +36,13 @@
             g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
             s.parentNode.insertBefore(g,s)}(document,'script'));
         </script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect('http://servermap.nimblerendition.com');
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+</script>
     </body>
 </html>

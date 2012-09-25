@@ -11,6 +11,7 @@ var Servers = function () {
 	events.EventEmitter.call(this);
 	this.sites = {};
 };
+
 // I'm not sure why this needs to be before adding the add method
 util.inherits(Servers, events.EventEmitter);
 Servers.prototype.add = function (site) {

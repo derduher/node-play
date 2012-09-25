@@ -1,10 +1,10 @@
+var Crawler = require('./crawler'),
+Queue = require('./queue'),
+events = require('events'),
+Servers = require('./servers');
 
-var Crawler = require('./crawler');
-var Queue = require('./queue');
-var events = require('events');
-var Servers = require('./servers');
-var queue = new Queue('http://www.google.com', 'http://slashdot.org', 'http://www.yahoo.com', 'http://www.rottentomatoes.com', 'http://www.github.com');
-var servers = new Servers();
+var queue = new Queue('http://www.google.com', 'http://slashdot.org', 'http://www.yahoo.com', 'http://www.rottentomatoes.com', 'http://www.github.com'),
+servers = new Servers();
 //servers.on('add', function(geo) {
 	//console.log(geo.location.ll);
 //});
