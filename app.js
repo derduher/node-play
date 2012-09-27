@@ -21,11 +21,12 @@ function handler (req, res) {
 }
 
 ws.on('connection', function (socket) {
-  //socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
-  servers.on('add', function(geo) {
-	  socket.emit('news', geo);
-  });
+	var buffer = [];
+	servers.on('add', function(geo) {
+		buffer.push(geo);
+		if (buffer.length % 8 === 0) {
+			socket.emit('server', buffer);
+			buffer = [];
+		}
+	});
 });
