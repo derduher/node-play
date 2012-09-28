@@ -20,13 +20,15 @@ function handler (req, res) {
     });
 }
 
+var buffer = [];
 ws.on('connection', function (socket) {
-	var buffer = [];
 	servers.on('add', function(geo) {
 		buffer.push(geo);
-		if (buffer.length % 8 === 0) {
+	});
+	setInterval(function () {
+		if (buffer.length) {
 			socket.emit('server', buffer);
 			buffer = [];
 		}
-	});
+	}, 2000);
 });

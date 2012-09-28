@@ -7,7 +7,7 @@ var queue = new Queue('http://www.google.com', 'http://slashdot.org', 'http://ww
 servers = new Servers();
 
 var sites_crawled = 0,
-concurrent_max = 2,
+concurrent_max = 20,
 concurrent = 1,
 max_sites = 1000;
 var nextInLine = function (site) {
